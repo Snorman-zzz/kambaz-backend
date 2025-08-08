@@ -25,7 +25,9 @@ app.use(cors({
             process.env.NETLIFY_URL,
             process.env.NETLIFY_URL?.replace(/\/$/, ''), // Remove trailing slash
             "http://localhost:5173",
-            /^https:\/\/.*--aquamarine-naiad-c8742e\.netlify\.app$/
+            /^https:\/\/.*--aquamarine-naiad-c8742e\.netlify\.app$/,
+            // Allow your deployed site slug (branch/preview/main deploys)
+            /^https:\/\/.*--kambaz-react-web-application\.netlify\.app$/
         ];
         
         const isAllowed = allowedOrigins.some(allowed => {
@@ -46,6 +48,9 @@ app.use(cors({
     }
 }));
 
+// Trust proxy (needed for secure cookies behind Render's proxy)
+app.set("trust proxy", 1);
+
 // 2. Session configuration
 const sessionOptions = {
     secret: process.env.SESSION_SECRET || "kambaz",
@@ -58,7 +63,7 @@ if (process.env.NODE_ENV !== "development") {
     sessionOptions.cookie = {
         sameSite: "none",
         secure: true,
-        domain: process.env.NODE_SERVER_DOMAIN,
+        // Avoid setting domain unless you use a custom domain
     };
 }
 app.use(session(sessionOptions));
