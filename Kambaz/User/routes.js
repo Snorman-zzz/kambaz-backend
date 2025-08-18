@@ -92,24 +92,37 @@ export default function UserRoutes(app) {
         }
         res.json(currentUser);
     };
-    const findCoursesForEnrolledUser = (req, res) => {
-        let { userId } = req.params;
-        if (userId === "current") {
+    const findCoursesForEnrolledUser = async (req, res) => {
+        try {
+            let { userId } = req.params;
+            if (userId === "current") {
+                const currentUser = req.session["currentUser"];
+                if (!currentUser) {
+                    res.sendStatus(401);
+                    return;
+                }
+                userId = currentUser._id;
+            }
+            // For now, return all courses since enrollment logic needs to be implemented
+            const courses = await courseDao.findAllCourses();
+            res.json(courses);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    };
+    const createCourse = async (req, res) => {
+        try {
             const currentUser = req.session["currentUser"];
             if (!currentUser) {
                 res.sendStatus(401);
                 return;
             }
-            userId = currentUser._id;
+            const newCourse = await courseDao.createCourse(req.body);
+            // TODO: Implement enrollment logic with MongoDB
+            res.json(newCourse);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
         }
-        const courses = courseDao.findCoursesForEnrolledUser(userId);
-        res.json(courses);
-    };
-    const createCourse = (req, res) => {
-        const currentUser = req.session["currentUser"];
-        const newCourse = courseDao.createCourse(req.body);
-        enrollmentsDao.enrollUserInCourse(currentUser._id, newCourse._id);
-        res.json(newCourse);
     };
     app.post("/api/users/current/courses", createCourse);
     app.get("/api/users/:userId/courses", findCoursesForEnrolledUser);
