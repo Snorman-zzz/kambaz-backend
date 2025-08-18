@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import express from 'express'
 import Hello from "./Hello.js"
 import Lab5 from "./Lab5/index.js";
@@ -11,18 +10,8 @@ import ModuleRoutes from "./Kambaz/Modules/routes.js";
 import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
 import mongoose from "mongoose";
 
-let CONNECTION_STRING = process.env.MONGO_CONNECTION_STRING;
-if (CONNECTION_STRING && CONNECTION_STRING.includes("MONGO_CONNECTION_STRING=")) {
-    CONNECTION_STRING = CONNECTION_STRING.split("MONGO_CONNECTION_STRING=").pop();
-}
-if (!CONNECTION_STRING) {
-    CONNECTION_STRING = "mongodb://127.0.0.1:27017/kambaz";
-}
-mongoose
-    .connect(CONNECTION_STRING)
-    .catch((err) => {
-        console.error("Mongo connection error:", err?.message || err);
-    });
+const CONNECTION_STRING = process.env.MONGO_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz"
+mongoose.connect(CONNECTION_STRING);
 const app = express()
 
 // 1. CORS must come FIRST, before any routes
@@ -31,29 +20,28 @@ app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-
+        
         const allowedOrigins = [
-            process.env.FRONTEND_URL?.replace(/\/$/, ''),
-            process.env.NETLIFY_URL?.replace(/\/$/, ''),
+            process.env.NETLIFY_URL,
+            process.env.NETLIFY_URL?.replace(/\/$/, ''), // Remove trailing slash
             "http://localhost:5173",
-            /^https?:\/\/.*\.netlify\.app$/,
-            /^https?:\/\/.*\.onrender\.com$/
+            /^https:\/\/.*--aquamarine-naiad-c8742e\.netlify\.app$/
         ];
-
+        
         const isAllowed = allowedOrigins.some(allowed => {
-            if (typeof allowed === 'string' && allowed) {
+            if (typeof allowed === 'string') {
                 return origin === allowed;
             } else if (allowed instanceof RegExp) {
                 return allowed.test(origin);
             }
             return false;
         });
-
+        
         if (isAllowed) {
             callback(null, true);
         } else {
             console.log('CORS blocked origin:', origin);
-            callback(null, false);
+            callback(new Error('Not allowed by CORS'));
         }
     }
 }));
@@ -70,7 +58,6 @@ if (process.env.NODE_ENV !== "development") {
     sessionOptions.cookie = {
         sameSite: "none",
         secure: true,
-        domain: process.env.NODE_SERVER_DOMAIN,
     };
 }
 app.use(session(sessionOptions));
@@ -86,13 +73,5 @@ EnrollmentsRoutes(app);
 ModuleRoutes(app);
 AssignmentRoutes(app);
 Hello(app)
-
-// 5. Healthcheck and root endpoints
-app.get("/health", (req, res) => {
-    res.status(200).send("healthy");
-});
-app.get("/", (req, res) => {
-    res.status(200).send("OK");
-});
 
 app.listen(process.env.PORT || 4000)
