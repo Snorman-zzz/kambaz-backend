@@ -5,9 +5,14 @@ import * as enrollmentsDao from "../Enrollments/dao.js";
 export default function UserRoutes(app) {
     const createUser = async (req, res) => {
         try {
-            const newUser = await dao.createUser(req.body);
+            const userData = req.body;
+            if (!userData._id) {
+                userData._id = Date.now().toString(); // Generate simple string ID
+            }
+            const newUser = await dao.createUser(userData);
             res.json(newUser);
         } catch (e) {
+            console.error("User creation error:", e);
             res.status(500).json({ message: "Error creating user" });
         }
     };
@@ -63,7 +68,11 @@ export default function UserRoutes(app) {
                 res.status(400).json({ message: "Username already in use" });
                 return;
             }
-            const currentUser = await dao.createUser(req.body);
+            const userData = req.body;
+            if (!userData._id) {
+                userData._id = Date.now().toString(); // Generate simple string ID
+            }
+            const currentUser = await dao.createUser(userData);
             req.session["currentUser"] = currentUser;
             res.json(currentUser);
         } catch (e) {
