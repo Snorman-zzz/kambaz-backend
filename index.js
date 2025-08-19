@@ -25,7 +25,9 @@ app.use(cors({
             process.env.NETLIFY_URL,
             process.env.NETLIFY_URL?.replace(/\/$/, ''), // Remove trailing slash
             "http://localhost:5173",
-            /^https:\/\/.*--aquamarine-naiad-c8742e\.netlify\.app$/
+            "https://a6--kambaz-react-web-application.netlify.app",
+            /^https:\/\/.*--aquamarine-naiad-c8742e\.netlify\.app$/,
+            /^https:\/\/.*--kambaz-react-web-application\.netlify\.app$/
         ];
         
         const isAllowed = allowedOrigins.some(allowed => {
@@ -38,6 +40,7 @@ app.use(cors({
         });
         
         if (isAllowed) {
+            console.log('CORS allowed origin:', origin);
             callback(null, true);
         } else {
             console.log('CORS blocked origin:', origin);

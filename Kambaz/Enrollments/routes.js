@@ -15,8 +15,16 @@ export default function EnrollmentsRoutes(app) {
   // Enroll a user in a course (expects {user, course} body)
   app.post("/api/enrollments", async (req, res) => {
     try {
+      console.log("=== ENROLLMENT API DEBUG ===");
+      console.log("Session ID:", req.sessionID);
+      console.log("Session data:", req.session);
+      console.log("Headers:", req.headers);
+      
       const currentUser = req.session["currentUser"];
+      console.log("Current user from session:", currentUser);
+      
       if (!currentUser) {
+        console.log("No current user found in session - returning 401");
         return res.status(401).json({ message: "Authentication required" });
       }
 
