@@ -99,11 +99,20 @@ export default function UserRoutes(app) {
         res.sendStatus(200);
     };
     const profile = async (req, res) => {
+        console.log("=== PROFILE API DEBUG ===");
+        console.log("Session ID:", req.sessionID);
+        console.log("Session data:", req.session);
+        console.log("Headers:", req.headers);
+        
         const currentUser = req.session["currentUser"];
+        console.log("Current user from session:", currentUser);
+        
         if (!currentUser) {
+            console.log("No current user found in session - returning 401");
             res.sendStatus(401);
             return;
         }
+        console.log("Profile request successful, returning user:", currentUser);
         res.json(currentUser);
     };
     const findUsersByRole = async (req, res) => {
