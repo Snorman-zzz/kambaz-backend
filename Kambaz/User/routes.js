@@ -13,8 +13,12 @@ export default function UserRoutes(app) {
     };
     const deleteUser = async (req, res) => {
         try {
-            await dao.deleteUser(req.params.userId);
-            res.sendStatus(204);
+            const deletedUser = await dao.deleteUser(req.params.userId);
+            if (deletedUser) {
+                res.json({ message: "User deleted successfully" });
+            } else {
+                res.status(404).json({ message: "User not found" });
+            }
         } catch (e) {
             res.status(500).json({ message: "Error deleting user" });
         }
@@ -43,10 +47,11 @@ export default function UserRoutes(app) {
         try {
             const userId = req.params.userId;
             const userUpdates = req.body;
-            await dao.updateUser(userId, userUpdates);
-            const currentUser = await dao.findUserById(userId);
-            req.session["currentUser"] = currentUser;
-            res.json(currentUser);
+            const updatedUser = await dao.updateUser(userId, userUpdates);
+            if (req.session["currentUser"]?._id === userId) {
+                req.session["currentUser"] = updatedUser;
+            }
+            res.json(updatedUser);
         } catch (e) {
             res.status(500).json({ message: "Error updating user" });
         }
@@ -92,6 +97,24 @@ export default function UserRoutes(app) {
         }
         res.json(currentUser);
     };
+    const findUsersByRole = async (req, res) => {
+        try {
+            const { role } = req.params;
+            const users = await dao.findUsersByRole(role);
+            res.json(users);
+        } catch (e) {
+            res.status(500).json({ message: "Error fetching users by role" });
+        }
+    };
+    const findUsersByPartialName = async (req, res) => {
+        try {
+            const { name } = req.params;
+            const users = await dao.findUsersByPartialName(name);
+            res.json(users);
+        } catch (e) {
+            res.status(500).json({ message: "Error fetching users by name" });
+        }
+    };
     const findCoursesForEnrolledUser = async (req, res) => {
         try {
             let { userId } = req.params;
@@ -128,6 +151,8 @@ export default function UserRoutes(app) {
     app.get("/api/users/:userId/courses", findCoursesForEnrolledUser);
     app.post("/api/users", createUser);
     app.get("/api/users", findAllUsers);
+    app.get("/api/users/role/:role", findUsersByRole);
+    app.get("/api/users/name/:name", findUsersByPartialName);
     app.get("/api/users/:userId", findUserById);
     app.put("/api/users/:userId", updateUser);
     app.delete("/api/users/:userId", deleteUser);
