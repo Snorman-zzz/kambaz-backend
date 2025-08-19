@@ -1,22 +1,23 @@
-import Database from "../Database/index.js";
-import { v4 as uuidv4 } from "uuid";
+import model from "./model.js";
 
-export function findEnrollmentsByUser(userId) {
-  return Database.enrollments.filter((e) => e.user === userId);
-}
+export const findEnrollmentsByUser = (userId) => model.find({ user: userId });
 
-export function enrollUserInCourse(userId, courseId) {
-  if (Database.enrollments.some((e) => e.user === userId && e.course === courseId)) {
-    return { status: "duplicate" };
+export const enrollUserInCourse = async (userId, courseId) => {
+  try {
+    const record = { user: userId, course: courseId };
+    const enrollment = await model.create(record);
+    return enrollment;
+  } catch (error) {
+    if (error.code === 11000) { // Duplicate key error
+      throw new Error("User is already enrolled in this course");
+    }
+    throw error;
   }
-  const record = { _id: uuidv4(), user: userId, course: courseId };
-  Database.enrollments.push(record);
-  return record;
-}
+};
 
-export function unenrollUserFromCourse(userId, courseId) {
-  Database.enrollments = Database.enrollments.filter(
-    (e) => !(e.user === userId && e.course === courseId)
-  );
-  return { status: "ok" };
-}
+export const unenrollUserFromCourse = (userId, courseId) => 
+  model.findOneAndDelete({ user: userId, course: courseId });
+
+export const findAllEnrollments = () => model.find();
+
+export const findEnrollmentsByCourse = (courseId) => model.find({ course: courseId });
