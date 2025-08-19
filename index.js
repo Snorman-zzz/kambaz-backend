@@ -5,6 +5,7 @@ import EnrollmentsRoutes from "./Kambaz/Enrollments/routes.js";
 import cors from "cors";
 import UserRoutes from "./Kambaz/User/routes.js";
 import session from "express-session";
+import MongoStore from "connect-mongo";
 import CourseRoutes from "./Kambaz/Courses/routes.js";
 import ModuleRoutes from "./Kambaz/Modules/routes.js";
 import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
@@ -54,6 +55,10 @@ const sessionOptions = {
     secret: process.env.SESSION_SECRET || "kambaz",
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: CONNECTION_STRING,
+        touchAfter: 24 * 3600 // lazy session update
+    })
 };
 
 if (process.env.NODE_ENV !== "development") {
@@ -61,6 +66,7 @@ if (process.env.NODE_ENV !== "development") {
     sessionOptions.cookie = {
         sameSite: "none",
         secure: true,
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
     };
 }
 app.use(session(sessionOptions));
@@ -77,4 +83,9 @@ ModuleRoutes(app);
 AssignmentRoutes(app);
 Hello(app)
 
-app.listen(process.env.PORT || 4000)
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Database: ${CONNECTION_STRING.split('@')[1]?.split('/')[0] || 'local'}`);
+});
