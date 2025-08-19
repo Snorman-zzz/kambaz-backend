@@ -74,6 +74,16 @@ app.use(session(sessionOptions));
 // 3. Body parsing middleware
 app.use(express.json());
 
+// Debug endpoint to check session
+app.get("/api/debug/session", (req, res) => {
+    res.json({
+        sessionID: req.sessionID,
+        session: req.session,
+        currentUser: req.session?.currentUser || null,
+        cookies: req.headers.cookie || null
+    });
+});
+
 // 4. Routes come LAST
 UserRoutes(app);
 CourseRoutes(app);
